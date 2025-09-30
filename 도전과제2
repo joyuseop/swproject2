@@ -1,0 +1,53 @@
+#define LED_PIN 7
+#define PERIOD_US 10000   // 100=0.1ms, 1000=1ms, 10000=10ms
+
+int duty = 0;        
+int fadeAmount = 1;  
+int period_us = PERIOD_US;
+
+void set_period(int period) {
+  if (period < 100) period = 100;
+  if (period > 10000) period = 10000;
+  period_us = period;
+}
+
+void set_duty(int d) {
+  if (d < 0) d = 0;
+  if (d > 100) d = 100;
+  duty = d;
+}
+
+void pwm_out() {
+  int on_time  = (period_us * duty) / 100;
+  int off_time = period_us - on_time;
+
+  if (on_time > 0) {
+    digitalWrite(LED_PIN, HIGH);
+    delayMicroseconds(on_time);
+  }
+  if (off_time > 0) {
+    digitalWrite(LED_PIN, LOW);
+    delayMicroseconds(off_time);
+  }
+}
+
+void setup() {
+  pinMode(LED_PIN, OUTPUT);
+  set_period(PERIOD_US);
+}
+
+void loop() {
+  set_duty(duty);
+
+  int hold_time = 10000;   
+  int repeat = hold_time / period_us;
+  for (int i = 0; i < repeat; i++) {
+    pwm_out();
+  }
+
+  duty = duty + fadeAmount;
+
+  if (duty <= 0 || duty >= 100) {
+    fadeAmount = -fadeAmount;
+  }
+}
