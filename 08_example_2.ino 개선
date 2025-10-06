@@ -1,0 +1,61 @@
+#define PIN_LED LED_BUILTIN
+#define PIN_TRIG 12
+#define PIN_ECHO 11
+#define SND_VEL 346.0
+#define INTERVAL 25
+#define PULSE_DURATION 10
+#define SCALE (0.001 * 0.5 * SND_VEL)
+#define TIMEOUT ((INTERVAL / 2) * 1000.0)
+
+#define DIST_MIN 100.0
+#define DIST_CENTER 200.0
+#define DIST_MAX 300.0
+
+unsigned long last_time = 0;
+
+void setup() {
+  pinMode(PIN_LED, OUTPUT);
+  pinMode(PIN_TRIG, OUTPUT);
+  pinMode(PIN_ECHO, INPUT);
+  Serial.begin(57600);
+}
+
+void loop() {
+  if (millis() - last_time < INTERVAL) return;
+  last_time = millis();
+
+  float distance = measureDistance();
+  if (distance < DIST_MIN) distance = DIST_MIN;
+  if (distance > DIST_MAX) distance = DIST_MAX;
+
+  int duty;
+
+  if (distance <= DIST_CENTER) {
+    
+    duty = (int)(255.0 * (distance - DIST_MIN) / (DIST_CENTER - DIST_MIN));
+  } else {
+    
+    duty = (int)(255.0 * (DIST_MAX - distance) / (DIST_MAX - DIST_CENTER));
+  }
+
+  if (duty < 0) duty = 0;
+  if (duty > 255) duty = 255;
+
+  analogWrite(PIN_LED, duty);
+
+  Serial.print("Distance(mm): ");
+  Serial.print(distance);
+  Serial.print("\tDuty: ");
+  Serial.println(duty);
+}
+
+float measureDistance() {
+  digitalWrite(PIN_TRIG, LOW);
+  delayMicroseconds(2);
+  digitalWrite(PIN_TRIG, HIGH);
+  delayMicroseconds(PULSE_DURATION);
+  digitalWrite(PIN_TRIG, LOW);
+
+  long duration = pulseIn(PIN_ECHO, HIGH, TIMEOUT);
+  return duration * SCALE;
+}
